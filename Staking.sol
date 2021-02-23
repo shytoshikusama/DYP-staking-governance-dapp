@@ -697,47 +697,47 @@ interface IUniswapV2Pair {
 /**
  * @dev Staking Smart Contract
  * 
- *  - Users stake Uniswap LP Tokens to receive WETH and DYP Tokens as Rewards
+ *  - Users stake Uniswap LP Tokens to receive WETH and BONE Tokens as Rewards
  * 
- *  - Reward Tokens (DYP) are added to contract balance upon deployment by deployer
+ *  - Reward Tokens (BONE) are added to contract balance upon deployment by deployer
  * 
- *  - After Adding the DYP rewards, admin is supposed to transfer ownership to Governance contract
+ *  - After Adding the BONE rewards, admin is supposed to transfer ownership to Governance contract
  * 
  *  - Users deposit Set (Predecided) Uniswap LP Tokens and get a share of the farm
  * 
- *  - The smart contract disburses `disburseAmount` DYP as rewards over `disburseDuration`
+ *  - The smart contract disburses `disburseAmount` BONE as rewards over `disburseDuration`
  * 
  *  - A swap is attempted periodically at atleast a set delay from last swap
  * 
  *  - The swap is attempted according to SWAP_PATH for difference deployments of this contract
  * 
  *  - For 4 different deployments of this contract, the SWAP_PATH will be:
- *      - DYP-WETH
- *      - DYP-WBTC-WETH (assumes appropriate liquidity is available in WBTC-WETH pair)
- *      - DYP-USDT-WETH (assumes appropriate liquidity is available in USDT-WETH pair)
- *      - DYP-USDC-WETH (assumes appropriate liquidity is available in USDC-WETH pair)
+ *      - BONE-WETH
+ *      - BONE-WBTC-WETH (assumes appropriate liquidity is available in WBTC-WETH pair)
+ *      - BONE-USDT-WETH (assumes appropriate liquidity is available in USDT-WETH pair)
+ *      - BONE-USDC-WETH (assumes appropriate liquidity is available in USDC-WETH pair)
  * 
- *  - Any swap may not have a price impact on DYP price of more than approx ~2.49% for the related DYP pair
- *      DYP-WETH swap may not have a price impact of more than ~2.49% on DYP price in DYP-WETH pair
- *      DYP-WBTC-WETH swap may not have a price impact of more than ~2.49% on DYP price in DYP-WBTC pair
- *      DYP-USDT-WETH swap may not have a price impact of more than ~2.49% on DYP price in DYP-USDT pair
- *      DYP-USDC-WETH swap may not have a price impact of more than ~2.49% on DYP price in DYP-USDC pair
+ *  - Any swap may not have a price impact on BONE price of more than approx ~2.49% for the related BONE pair
+ *      BONE-WETH swap may not have a price impact of more than ~2.49% on BONE price in BONE-WETH pair
+ *      BONE-WBTC-WETH swap may not have a price impact of more than ~2.49% on BONE price in BONE-WBTC pair
+ *      BONE-USDT-WETH swap may not have a price impact of more than ~2.49% on BONE price in BONE-USDT pair
+ *      BONE-USDC-WETH swap may not have a price impact of more than ~2.49% on BONE price in BONE-USDC pair
  * 
  *  - After the swap,converted WETH is distributed to stakers at pro-rata basis, according to their share of the staking pool
- *    on the moment when the WETH distribution is done. And remaining DYP is added to the amount to be distributed or burnt.
- *    The remaining DYP are also attempted to be swapped to WETH in the next swap if the price impact is ~2.49% or less
+ *    on the moment when the WETH distribution is done. And remaining BONE is added to the amount to be distributed or burnt.
+ *    The remaining BONE are also attempted to be swapped to WETH in the next swap if the price impact is ~2.49% or less
  * 
  *  - At a set delay from last execution, Governance contract (owner) may execute disburse or burn features
  * 
- *  - Burn feature should send the DYP tokens to set BURN_ADDRESS
+ *  - Burn feature should send the BONE tokens to set BURN_ADDRESS
  * 
- *  - Disburse feature should disburse the DYP 
+ *  - Disburse feature should disburse the BONE 
  *    (which would have a max price impact ~2.49% if it were to be swapped, at disburse time 
- *    - remaining DYP are sent to BURN_ADDRESS) 
+ *    - remaining BONE are sent to BURN_ADDRESS) 
  *    to stakers at pro-rata basis according to their share of
  *    the staking pool at the moment the disburse is done
  * 
- *  - Users may claim their pending WETH and DYP anytime
+ *  - Users may claim their pending WETH and BONE anytime
  * 
  *  - Pending rewards are auto-claimed on any deposit or withdraw
  * 
@@ -745,7 +745,7 @@ interface IUniswapV2Pair {
  * 
  *  - Owner may not transfer out LP Tokens from this contract anytime
  * 
- *  - Owner may transfer out WETH and DYP Tokens from this contract once `adminClaimableTime` is reached
+ *  - Owner may transfer out WETH and BONE Tokens from this contract once `adminClaimableTime` is reached
  * 
  *  - CONTRACT VARIABLES must be changed to appropriate values before live deployment
  */
@@ -853,7 +853,7 @@ contract FarmProRata is Ownable {
 
     uint internal constant pointMultiplier = 1e18;
 
-    // To be executed by admin after deployment to add DYP to contract
+    // To be executed by admin after deployment to add BONE to contract
     function addContractBalance(uint amount) public onlyOwner {
         require(Token(trustedRewardTokenAddress).transferFrom(msg.sender, address(this), amount), "Cannot add balance!");
         contractBalance = contractBalance.add(amount);
@@ -885,7 +885,7 @@ contract FarmProRata is Ownable {
         lastEthDivPoints[account] = totalEthDivPoints;
     }
 
-    // view function to check last updated DYP pending rewards
+    // view function to check last updated BONE pending rewards
     function getPendingDivs(address _holder) public view returns (uint) {
         if (!holders.contains(_holder)) return 0;
         if (depositedTokens[_holder] == 0) return 0;
@@ -985,7 +985,7 @@ contract FarmProRata is Ownable {
         updateAccount(msg.sender);
     }
     
-    // private function to distribute DYP rewards
+    // private function to distribute BONE rewards
     function distributeDivs(uint amount) private {
         require(amount > 0 && totalTokens > 0, "distributeDivs failed!");
         totalDivPoints = totalDivPoints.add(amount.mul(pointMultiplier).div(totalTokens));
@@ -999,7 +999,7 @@ contract FarmProRata is Ownable {
         emit EthRewardsDisbursed(amount);
     }
 
-    // private function to allocate DYP to be disbursed calculated according to time passed
+    // private function to allocate BONE to be disbursed calculated according to time passed
     function disburseTokens() private {
         uint amount = getPendingDisbursement();
 
@@ -1134,7 +1134,7 @@ contract FarmProRata is Ownable {
         return maxSwappableAmount;
     }
 
-    // view function to calculate amount of DYP pending to be allocated since `lastDisburseTime` 
+    // view function to calculate amount of BONE pending to be allocated since `lastDisburseTime` 
     function getPendingDisbursement() public view returns (uint) {
         uint timeDiff;
         uint _now = now;
